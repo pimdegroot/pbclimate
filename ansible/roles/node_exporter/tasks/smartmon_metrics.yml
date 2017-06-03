@@ -1,0 +1,35 @@
+---
+
+- name: Install smartmon package
+  apt: pkg={{ item }} state=latest install_recommends=no
+  with_items:
+    - smartmontools
+
+- name: Install smartmon metrics tool
+  copy:
+    src: smartmon_metrics.sh
+    dest: /usr/local/sbin/smartmon_metrics.sh
+    owner: root
+    mode: 0755
+
+- name: Install smartmon_metrics systemd service file
+  notify:
+  template:
+    src: "{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+  with_items:
+    - smartmon_metrics.service
+    - smartmon_metrics.timer
+
+- name: Enable and start smartmon_metrics service
+  systemd:
+    name: smartmon_metrics.service
+    enabled: True
+    daemon_reload: yes
+
+- name: Enable and start smartmon_metrics timer
+  systemd:
+    name: smartmon_metrics.timer
+    state: started
+    enabled: True
+    daemon_reload: yes

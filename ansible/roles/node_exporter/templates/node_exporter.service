@@ -1,0 +1,12 @@
+[Unit]
+Description=Prometheus Node Exporter
+
+[Service]
+User=nobody
+Group=nogroup
+ExecStart={{ node_exporter_path }}/node_exporter -web.listen-address "{{ node_exporter_listen_address }}" -collectors.enabled "{{ node_exporter_collectors }}" -collector.textfile.directory {{ node_exporter_textfiles_path }}
+KillMode=process
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
