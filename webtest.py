@@ -13,24 +13,25 @@ barpres_metric = Gauge('barometer_sensor_pressure_pascals', 'Barometric sensor p
 humidity_metric = Gauge('humidity_sensor_percent', 'Humidity sensor humidity reading')
 humidity_temp_metric = Gauge('humidity_sensor_temperature_celcius', 'Humidity sensor temperature reading')
 
+
+# Return the readings from the serial line.
+class readSerial():
+    ser.write('g')
+    bartemp = float(ser.readline())
+    barpres = int(float(ser.readline()))
+    humidity = int(float(ser.readline()))
+    humtemp = int(float(ser.readline()))
+    return bartemp, barpres, humidity, humtemp
+
+
 #This class will handles any incoming request from
 #the browser 
 class myHandler(BaseHTTPRequestHandler):
     #Handler for the GET requests
     def do_GET(self):
-        ser.write('g')
-        bartemp = float(ser.readline())
-        barpres = int(float(ser.readline()))
-        humidity = int(float(ser.readline()))
-        humtemp = int(float(ser.readline()))
-        currenttime = time.time()
-
-        bartemp_metric.set(bartemp)
-        barpres_metric.set(barpres)
-        humidity_metric.set(humidity)
-        humidity_temp_metric.set(humtemp)
-
         if self.path=="/temp.json":
+            bartemp, barpres, humidity, humtemp = readSerial()
+            currenttime = time.time()
             data = {'BarometerTemperature':bartemp, 'BarometerPressure':barpres, 'Humidity':humidity, 'HumidityTemperature':humtemp, 'CurrentTime':int(currenttime)}
 
             self.send_response(200)
@@ -40,6 +41,12 @@ class myHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(data))
             return
         elif self.path=="/metrics":
+            bartemp, barpres, humidity, humtemp = readSerial()
+            bartemp_metric.set(bartemp)
+            barpres_metric.set(barpres)
+            humidity_metric.set(humidity)
+            humidity_temp_metric.set(humtemp)
+
             registry = core.REGISTRY
             params = parse_qs(urlparse(self.path).query)
             if 'name[]' in params:
